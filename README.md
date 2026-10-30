@@ -1,2 +1,3 @@
-# pro02-nginx-python-flask-fastapi-mysql
-Proyecto de clase con Nginx, Python, Flask, FastAPI y MySQL
+# Pro02: Nginx, Python, Flask, FastAPI y MySQL
+
+Proyecto de clase con una arquitectura basada en Nginx, Python/Flask/FastAPI y MySQL.

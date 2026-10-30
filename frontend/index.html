@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hotel Reservation System</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="js/app.js" defer></script>
+</head>
+
+<body>
+    <header>
+        <h1>Reserva de Hoteles</h1>
+    </header>
+
+    <div class="container">
+        <div id="mensaje-container"></div>
+
+        <div id="vista-busqueda" class="view active">
+            <div class="search-form">
+                <h2>Buscar hoteles</h2>
+                <form id="form-busqueda">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="ciudad">Ciudad</label>
+                            <select id="ciudad">
+                                <option value="">Todas las ciudades</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="fecha-entrada">Fecha de entrada</label>
+                            <input type="date" id="fecha-entrada">
+                        </div>
+                        <div class="form-group">
+                            <label for="fecha-salida">Fecha de salida</label>
+                            <input type="date" id="fecha-salida">
+                        </div>
+                        <div class="form-group">
+                            <label for="habitaciones">Habitaciones</label>
+                            <input type="number" id="habitaciones" min="1" value="1">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">Buscar</button>
+                </form>
+            </div>
+        </div>
+
+        <div id="vista-lista" class="view">
+            <button class="btn btn-secondary btn-volver" id="btn-volver-busqueda">← Volver a buscar</button>
+            <div id="lista-hoteles" class="hotel-grid"></div>
+        </div>
+
+        <div id="vista-detalle" class="view">
+            <button class="btn btn-secondary btn-volver" id="btn-volver-lista">← Volver a resultados</button>
+            <div id="hotel-detalle"></div>
+        </div>
+    </div>
+</body>
+
+</html>
