@@ -1,0 +1,130 @@
+# Este archivo define y coordina todos los contenedores necesarios para ejecutar la aplicación completa.
+# Su función principal es levantar la base de datos, el backend, el frontend con Nginx y phpMyAdmin, además de establecer sus dependencias y configuraciones.
+
+# Inicia la definición de los servicios que formarán parte del entorno.
+services:
+  # Agrupa la configuración del servicio de base de datos.
+  # Base de Datos
+  db:
+    # Indica que este servicio utilizará la imagen oficial de MySQL 8.0.
+    image: mysql:8.0
+    # Asigna un nombre fijo al contenedor de la base de datos.
+    container_name: db2-mysql
+    # Define variables de entorno necesarias para inicializar MySQL.
+    environment:
+      # Establece la contraseña del usuario root de MySQL.
+      MYSQL_ROOT_PASSWORD: root
+      # Crea automáticamente una base de datos llamada bd1 al iniciar el contenedor.
+      MYSQL_DATABASE: bd1
+    # Expone el puerto de MySQL del contenedor hacia el host.
+    ports:
+      # Mapea el puerto 3306 del host al puerto 3306 del contenedor.
+      - "3306:3306"
+    # Monta el script de inicializacion de la base de datos.
+    volumes:
+      # Ejecuta los scripts SQL al crear el contenedor por primera vez.
+      - ./init-db:/docker-entrypoint-initdb.d
+    # Configura una comprobación periódica del estado del servicio.
+    healthcheck:
+      # Ejecuta un ping a MySQL en localhost usando la contraseña root para verificar que responde.
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-proot"]
+      # Indica que la comprobación se realizará cada 10 segundos.
+      interval: 10s
+      # Limita a 5 segundos el tiempo máximo de espera por cada comprobación.
+      timeout: 5s
+      # Permite hasta 10 intentos fallidos antes de marcar el servicio como no saludable.
+      retries: 10
+
+  # Agrupa la configuración del servicio backend implementado en Python con Flask.
+  # Backend (Python + Flask)
+  backend:
+    # Indica que la imagen del backend se construirá a partir del directorio ./backend.
+    build: ./backend
+    # Asigna un nombre fijo al contenedor del backend.
+    container_name: backend2-flask
+    # Añade una explicación sobre el alias de red usado por este servicio.
+    # Añadimos esto para que Docker le asigne el nombre "backend" en la red
+    # Define la red y sus opciones específicas para el backend.
+    networks:
+      # Usa la red por defecto creada por Docker Compose.
+      default:
+        # Define alias adicionales para que otros contenedores puedan resolver este servicio por nombre.
+        aliases:
+          # Hace que este servicio sea accesible también mediante el nombre backend.
+          - backend
+    # Monta volúmenes entre el host y el contenedor.
+    volumes:
+      # Sincroniza el directorio local ./backend con /app dentro del contenedor.
+      - ./backend:/app
+    # Define variables de entorno que usará la aplicación Flask para conectarse a MySQL.
+    environment:
+      # Indica que el host de la base de datos es el servicio db.
+      - DB_HOST=db
+      # Define el usuario con el que el backend se conectará a MySQL.
+      - DB_USER=root
+      # Define la contraseña con la que el backend se conectará a MySQL.
+      - DB_PASS=root
+      # Define el nombre de la base de datos a utilizar.
+      - DB_NAME=bd1
+    # Establece dependencias de arranque respecto a otros servicios.
+    depends_on:
+      # Indica que el backend depende del servicio db.
+      db:
+        # Espera a que db esté marcado como saludable antes de arrancar este servicio.
+        condition: service_healthy
+    # Configura una comprobación periódica del estado del backend.
+    healthcheck:
+      # Lanza una petición HTTP local al endpoint /health para verificar que Flask está respondiendo.
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5000/health')"]
+      # Ejecuta la comprobación cada 10 segundos.
+      interval: 10s
+      # Espera un máximo de 5 segundos por cada comprobación.
+      timeout: 5s
+      # Permite hasta 10 fallos antes de marcar el backend como no saludable.
+      retries: 10
+
+  # Agrupa la configuración del servicio frontend servido con Nginx.
+  # Frontend (Nginx)
+  nginx:
+    # Indica que este servicio usará una imagen ligera oficial de Nginx.
+    image: nginx:alpine
+    # Asigna un nombre fijo al contenedor de Nginx.
+    container_name: servidor2-nginx
+    # Expone el puerto HTTP del contenedor hacia el host.
+    ports:
+      # Mapea el puerto 80 del host al puerto 80 del contenedor.
+      - "80:80"
+    # Monta los archivos del frontend y la configuración personalizada de Nginx.
+    volumes:
+      # Hace que Nginx sirva los archivos estáticos del directorio local frontend.
+      - ./frontend:/usr/share/nginx/html
+      # Sustituye la configuración por defecto de Nginx con el archivo local default.conf.
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+    # Añade una nota sobre la dependencia de Nginx respecto al backend.
+    # Importante: Nginx depende de que el backend esté listo
+    # Define que Nginx no debe arrancar hasta que el backend esté preparado.
+    depends_on:
+      # Indica que Nginx depende del servicio backend.
+      backend:
+        # Espera a que backend esté marcado como saludable antes de iniciar Nginx.
+        condition: service_healthy
+    # Reinicia automáticamente el contenedor salvo que se haya detenido manualmente.
+    restart: unless-stopped
+
+  # Agrupa la configuración del servicio phpMyAdmin para administrar MySQL desde el navegador.
+  # Administrador de BD
+  phpmyadmin:
+    # Indica que este servicio utilizará la imagen oficial de phpMyAdmin en la versión 5.2.
+    image: phpmyadmin:5.2
+    # Asigna un nombre fijo al contenedor de phpMyAdmin.
+    container_name: pma2-control
+    # Expone phpMyAdmin en un puerto del host distinto al de Nginx.
+    ports:
+      # Mapea el puerto 8081 del host al puerto 80 del contenedor.
+      - "8081:80"
+    # Define variables de entorno necesarias para conectar phpMyAdmin con MySQL.
+    environment:
+      # Indica a phpMyAdmin que el servidor MySQL está en el servicio db.
+      PMA_HOST: db
+      # Proporciona la contraseña del usuario root para facilitar la conexión inicial.
+      MYSQL_ROOT_PASSWORD: root
