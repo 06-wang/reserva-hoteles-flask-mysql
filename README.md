@@ -52,4 +52,4 @@ El usuario y la contraseña de MySQL son `root` y `root`, solo para usar en loca
 
 ## Autor
 
-Siyu, estudiante de 2º de ASIR.
+Zhiyou Wang, estudiante de 2º de ASIR.
